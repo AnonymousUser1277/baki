@@ -14,6 +14,8 @@
     input { background: #1a1220; border: 1px solid #38273f; color: #f4ece1; padding: 12px 18px; border-radius: 999px; font-size: 16px; text-align: center; width: 240px; outline: none; margin-bottom: 12px; }
     input:focus { border-color: #ff9a3c; }
     button { background: #ee2b45; color: #fff; border: 0; padding: 11px 28px; border-radius: 999px; font-weight: 600; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(238, 43, 69, 0.4); }
+    #reset-btn { position: fixed; bottom: 10px; right: 10px; z-index: 9999; background: #1a1220; border: 1px solid #38273f; color: #a79cb4; padding: 5px 10px; border-radius: 999px; font-size: 12px; opacity: 0.35; box-shadow: none; display: none; }
+    #reset-btn:hover { opacity: 1; border-color: #ee2b45; color: #fff; }
   </style>
 </head>
 <body>
@@ -26,18 +28,29 @@
     </form>
   </div>
   <iframe id="app" style="display:none" allow="autoplay"></iframe>
+  <button id="reset-btn" title="Change or Lock Passkey">🔑 Lock</button>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby5_s43J1EpG1ds-HcW9ZnoBK2rGQolvrDq-sgb1yYSBjsm9NwCKJmuVMZCe90ACACR/exec";
 
     function launch(key) {
       document.getElementById('gate').style.display = 'none';
+      document.getElementById('reset-btn').style.display = 'block';
       const frame = document.getElementById('app');
       frame.style.display = 'block';
       frame.src = GAS_URL + "?key=" + encodeURIComponent(key);
     }
 
-    // Auto-unlock instantly if you already entered your passkey on this Phone/PC
+    function resetVault() {
+      localStorage.removeItem('baki_vault_key');
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('app').src = 'about:blank';
+      document.getElementById('reset-btn').style.display = 'none';
+      document.getElementById('gate').style.display = 'flex';
+      document.getElementById('k').value = '';
+      document.getElementById('k').focus();
+    }
+
     const savedKey = localStorage.getItem('baki_vault_key');
     if (savedKey) launch(savedKey);
 
@@ -50,14 +63,9 @@
       }
     });
 
-    // If a wrong passkey was typed, allow instant reset
+    document.getElementById('reset-btn').addEventListener('click', resetVault);
     window.addEventListener('message', e => {
-      if (e.data === 'baki_reset_key') {
-        localStorage.removeItem('baki_vault_key');
-        document.getElementById('app').style.display = 'none';
-        document.getElementById('gate').style.display = 'flex';
-        document.getElementById('k').value = '';
-      }
+      if (e.data === 'baki_reset_key') resetVault();
     });
   </script>
 </body>
